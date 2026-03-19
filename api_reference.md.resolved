@@ -1,0 +1,73 @@
+# RideShare Lagos – API Reference
+
+All REST endpoints are prefixed with `/api/`.
+
+## 🔐 Authentication
+| Method | Endpoint | Description |
+|---|---|---|
+| `POST` | `/auth/register/` | Register as RIDER or DRIVER. |
+| `POST` | `/auth/login/` | Get JWT `access` and `refresh` tokens. |
+| `POST` | `/auth/logout/` | Blacklist refresh token to logout. |
+| `GET` | `/auth/profile/` | Get current user's details. |
+| `POST` | `/auth/token/refresh/` | Get new access token using refresh token. |
+
+---
+
+## 🚗 Rides
+| Method | Endpoint | Query Params | Description |
+|---|---|---|---|
+| `GET` | `/rides/` | `origin`, `destination`, `date`, `seats` | Search/List pending rides. |
+| `POST` | `/rides/` | - | Driver publishes a ride. |
+| `GET` | `/rides/<id>/` | - | Get specific ride details. |
+
+---
+
+## 📅 Bookings
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/bookings/` | List current user's bookings (Rider/Driver view). |
+| `POST` | `/bookings/create/` | Rider requests seats on a ride. |
+| `PATCH` | `/bookings/<id>/status/` | Driver: ACCEPTED, REJECTED, CANCELLED, COMPLETED. |
+
+---
+
+## 💰 Wallet & Paystack
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/wallet/history/` | Transaction ledger. |
+| `POST` | `/wallet/deposit/` | Init Paystack payment (returns `authorization_url`). |
+| `POST` | `/wallet/withdraw/` | Submit withdrawal request to bank. |
+| `POST` | `/wallet/paystack-webhook/` | HMAC-verified callback from Paystack. |
+
+---
+
+## 💬 Messaging & Notifications
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/messages/<user_id>/` | Fetch conversation history with a specific user. |
+| `GET` | `/notifications/` | List current user's notifications. |
+| `PATCH` | `/notifications/<id>/read/` | Mark a notification as read. |
+
+---
+
+## ⚡ WebSockets (Django Channels)
+
+### 1. Real-time Chat
+**URL**: `ws://<host>/ws/chat/<room_name>/`
+- `room_name` format: `chat_<uid_low>_<uid_high>`
+- **Event**: `send_message`
+  ```json
+  {"event": "send_message", "content": "Hello!", "receiver_id": 2}
+  ```
+- **Event**: `receive_message` (Broadcast)
+
+### 2. Live Tracking
+**URL**: `ws://<host>/ws/tracking/<ride_id>/`
+- **Driver Send**:
+  ```json
+  {"event": "location_update", "lat": 6.52, "lng": 3.37}
+  ```
+- **Rider Receive**:
+  ```json
+  {"event": "driver_location", "lat": 6.52, "lng": 3.37, "ride_id": 1}
+  ```

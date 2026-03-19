@@ -1,0 +1,10 @@
+from django.contrib import admin
+from .models import Transaction
+
+
+@admin.register(Transaction)
+class TransactionAdmin(admin.ModelAdmin):
+    list_display = ("id", "user", "transaction_type", "amount", "reference", "status", "created_at")
+    list_filter = ("transaction_type", "status")
+    search_fields = ("user__username", "reference")
+    readonly_fields = ("reference", "meta", "created_at")
