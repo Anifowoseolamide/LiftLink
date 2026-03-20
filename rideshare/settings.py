@@ -19,7 +19,24 @@ SECRET_KEY = os.environ.get(
 
 DEBUG = os.environ.get("DEBUG", "True") == "True"
 
-ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", 'liftlink-ikx9.onrender.com').split(",")
+ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "").split(",")
+
+# Add Render's external hostname if available
+render_host = os.environ.get("RENDER_EXTERNAL_HOSTNAME")
+if render_host:
+    ALLOWED_HOSTS.append(render_host)
+
+# If still empty or just an empty string from split, set defaults
+if not ALLOWED_HOSTS or ALLOWED_HOSTS == [""]:
+    ALLOWED_HOSTS = [
+        "localhost",
+        "127.0.0.1",
+        "liftlink-ikx9.onrender.com",
+    ]
+
+# Clean up: strip whitespace and remove empty strings
+ALLOWED_HOSTS = [host.strip() for host in ALLOWED_HOSTS if host.strip()]
+
 
 # CSRF and CORS
 CSRF_TRUSTED_ORIGINS = []
