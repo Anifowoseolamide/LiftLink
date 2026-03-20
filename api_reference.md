@@ -1,0 +1,143 @@
+# RideShare Lagos – API Reference
+
+All REST endpoints are prefixed with `/api/`.
+
+## 🔐 Authentication
+| Method | Endpoint | Description |
+|---|---|---|
+| `POST` | `/auth/register/` | Register as RIDER or DRIVER. |
+| `POST` | `/auth/login/` | Get JWT `access` and `refresh` tokens. |
+| `POST` | `/auth/logout/` | Blacklist refresh token to logout. |
+| `GET \| PATCH` | `/auth/profile/` | Get/Update current user's details. |
+| `POST` | `/auth/token/refresh/` | Get new access token using refresh token. |
+
+### Register Payload (`POST /auth/register/`)
+```json
+{
+  "username": "johndoe",
+  "first_name": "John",
+  "last_name": "Doe",
+  "email": "john@example.com",
+  "phone": "+2348012345678",
+  "role": "RIDER",
+  "password": "securepassword123",
+  "password2": "securepassword123"
+}
+```
+
+### Login Payload (`POST /auth/login/`)
+```json
+{
+  "username": "johndoe",
+  "password": "securepassword123"
+}
+```
+
+### Logout Payload (`POST /auth/logout/`)
+```json
+{
+  "refresh": "<refresh_token>"
+}
+```
+
+---
+
+## 🚗 Rides
+| Method | Endpoint | Query Params | Description |
+|---|---|---|---|
+| `GET` | `/rides/` | `origin`, `destination`, `date`, `seats` | Search/List pending rides. |
+| `POST` | `/rides/` | - | Driver publishes a ride. |
+| `GET` | `/rides/<id>/` | - | Get specific ride details. |
+
+### Create Ride Payload (`POST /api/rides/`)
+```json
+{
+  "origin_name": "Lekki Phase 1",
+  "destination_name": "Ikeja City Mall",
+  "origin_coords": "6.448,3.473",
+  "destination_coords": "6.619,3.358",
+  "departure_time": "2024-03-25T08:00:00Z",
+  "total_seats": 3,
+  "price_per_seat": 2500.00,
+  "vehicle_details": "Toyota Corolla (Blue) - ABC-123-XY"
+}
+```
+
+---
+
+## 📅 Bookings
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/bookings/` | List current user's bookings (Rider/Driver view). |
+| `POST` | `/bookings/create/` | Rider requests seats on a ride. |
+| `PATCH` | `/bookings/<id>/status/` | Update booking status. |
+
+### Create Booking Payload (`POST /api/bookings/create/`)
+```json
+{
+  "ride_id": 1,
+  "seats_booked": 2
+}
+```
+
+### Update Status Payload (`PATCH /api/bookings/<id>/status/`)
+```json
+{
+  "status": "ACCEPTED"
+}
+```
+*Valid statuses: `ACCEPTED`, `REJECTED`, `CANCELLED`, `COMPLETED`*
+
+---
+
+## 💰 Wallet & Paystack
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/wallet/history/` | Transaction ledger. |
+| `POST` | `/wallet/deposit/` | Init Paystack payment. |
+| `POST` | `/wallet/withdraw/` | Submit withdrawal request. |
+
+### Deposit Payload (`POST /api/wallet/deposit/`)
+```json
+{
+  "amount": 5000.00,
+  "email": "user@example.com"
+}
+```
+
+### Withdraw Payload (`POST /api/wallet/withdraw/`)
+```json
+{
+  "amount": 2000.00,
+  "bank_code": "058",
+  "account_number": "0123456789",
+  "account_name": "John Doe"
+}
+```
+
+---
+
+## 💬 Messaging & Notifications
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/messages/<user_id>/` | Fetch conversation history. |
+| `GET` | `/notifications/` | List current user's notifications. |
+| `PATCH` | `/notifications/<id>/read/` | Mark a notification as read. |
+
+---
+
+## ⚡ WebSockets (Django Channels)
+
+### 1. Real-time Chat
+**URL**: `ws://<host>/ws/chat/<room_name>/`
+- **Event**: `send_message`
+  ```json
+  {"event": "send_message", "content": "Hello!", "receiver_id": 2}
+  ```
+
+### 2. Live Tracking
+**URL**: `ws://<host>/ws/tracking/<ride_id>/`
+- **Driver Send**:
+  ```json
+  {"event": "location_update", "lat": 6.52, "lng": 3.37}
+  ```

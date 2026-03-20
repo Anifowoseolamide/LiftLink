@@ -11,10 +11,7 @@ class RideListCreateView(generics.ListCreateAPIView):
     """
     serializer_class = RideSerializer
 
-    def get_permissions(self):
-        if self.request.method == "POST":
-            return [permissions.IsAuthenticated()]
-        return [permissions.AllowAny()]
+    permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         qs = Ride.objects.filter(status=Ride.PENDING).select_related("driver")
@@ -50,7 +47,4 @@ class RideDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = RideSerializer
     queryset = Ride.objects.all()
 
-    def get_permissions(self):
-        if self.request.method == "GET":
-            return [permissions.AllowAny()]
-        return [permissions.IsAuthenticated()]
+    permission_classes = [permissions.IsAuthenticated]
