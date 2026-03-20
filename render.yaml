@@ -1,0 +1,33 @@
+services:
+  - type: web
+    name: liftlink-backend
+    runtime: python
+    buildCommand: ./build.sh
+    # Use Daphne (ASGI) to handle both HTTP and WebSockets
+    startCommand: daphne -b 0.0.0.0 -p $PORT rideshare.asgi:application
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: liftlink-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: liftlink-redis
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "False"
+      - key: ALLOWED_HOSTS
+        value: "*" # Update this with your Render URL after first deployment
+
+databases:
+  - name: liftlink-db
+    plan: free
+
+services:
+  - type: redis
+    name: liftlink-redis
+    plan: free
+    ipAllowList: [] # Only allow internal connections
