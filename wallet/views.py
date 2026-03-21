@@ -140,10 +140,21 @@ class PaystackWebhookView(APIView):
         if event == "charge.success":
             reference = data.get("reference", "")
             try:
-                txn = Transaction.objects.get(reference=reference)
-                txn.status = Transaction.SUCCESS
-                txn.meta = {**txn.meta, "paystack_response": data}
-                txn.save(update_fields=["status", "meta"])
+                from django.db import transaction
+                from django.db.models import F
+                from .models import Wallet
+                
+                with transaction.atomic():
+                    txn = Transaction.objects.select_for_update().get(reference=reference)
+                    if txn.status != Transaction.SUCCESS:
+                        txn.status = Transaction.SUCCESS
+                        txn.meta = {**txn.meta, "paystack_response": data}
+                        txn.save(update_fields=["status", "meta"])
+                        
+                        if txn.transaction_type == Transaction.DEPOSIT:
+                            wallet, _ = Wallet.objects.get_or_create(user=txn.user)
+                            wallet.balance = F('balance') + txn.amount
+                            wallet.save(update_fields=['balance'])
             except Transaction.DoesNotExist:
                 pass
 

@@ -14,7 +14,8 @@ class RideListCreateView(generics.ListCreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        qs = Ride.objects.filter(status=Ride.PENDING).select_related("driver")
+        from django.utils import timezone
+        qs = Ride.objects.filter(status=Ride.PENDING, departure_time__gte=timezone.now()).select_related("driver")
         params = self.request.query_params
 
         origin = params.get("origin")
@@ -36,9 +37,11 @@ class RideListCreateView(generics.ListCreateAPIView):
         return qs
 
     def perform_create(self, serializer):
+        from rest_framework.exceptions import PermissionDenied
         if self.request.user.role != User.DRIVER:
-            from rest_framework.exceptions import PermissionDenied
             raise PermissionDenied("Only drivers can publish rides.")
+        if not self.request.user.is_driver_verified:
+            raise PermissionDenied("Your driver profile must be verified before publishing rides.")
         serializer.save(driver=self.request.user)
 
 
@@ -48,3 +51,65 @@ class RideDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Ride.objects.all()
 
     permission_classes = [permissions.IsAuthenticated]
+
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from django.db import transaction
+
+class RideStartView(APIView):
+    """POST /api/rides/<pk>/start/ – Driver starts the ride."""
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, pk):
+        try:
+            ride = Ride.objects.get(pk=pk, driver=request.user)
+        except Ride.DoesNotExist:
+            return Response({"detail": "Ride not found or permission denied."}, status=status.HTTP_404_NOT_FOUND)
+            
+        if ride.status != Ride.PENDING:
+            return Response({"detail": "Only PENDING rides can be started."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        ride.status = Ride.ACTIVE
+        ride.save(update_fields=['status'])
+        return Response({"detail": "Ride started.", "status": ride.status})
+
+class RideCompleteView(APIView):
+    """POST /api/rides/<pk>/complete/ – Driver completes the ride and releases escrow."""
+    permission_classes = [permissions.IsAuthenticated]
+
+    @transaction.atomic
+    def post(self, request, pk):
+        from django.db.models import F
+        from wallet.models import Wallet, EscrowRecord
+        from bookings.models import Booking
+        
+        try:
+            ride = Ride.objects.select_for_update().get(pk=pk, driver=request.user)
+        except Ride.DoesNotExist:
+            return Response({"detail": "Ride not found or permission denied."}, status=status.HTTP_404_NOT_FOUND)
+            
+        if ride.status != Ride.ACTIVE:
+            return Response({"detail": "Only ACTIVE rides can be completed."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        ride.status = Ride.COMPLETED
+        ride.save(update_fields=['status'])
+        
+        # Release Escrow
+        accepted_bookings = Booking.objects.filter(ride=ride, status=Booking.ACCEPTED)
+        
+        for booking in accepted_bookings:
+            try:
+                escrow = EscrowRecord.objects.select_for_update().get(booking=booking, status=EscrowRecord.Status.HELD)
+                driver_wallet, _ = Wallet.objects.get_or_create(user=ride.driver)
+                
+                driver_wallet.balance = F('balance') + escrow.amount
+                driver_wallet.save(update_fields=['balance'])
+                
+                escrow.status = EscrowRecord.Status.RELEASED
+                escrow.save(update_fields=['status'])
+                
+            except EscrowRecord.DoesNotExist:
+                continue
+                
+        return Response({"detail": "Ride completed and funds released.", "status": ride.status})

@@ -35,19 +35,50 @@ class BookingSerializer(serializers.ModelSerializer):
 
     @transaction.atomic
     def create(self, validated_data):
+        from django.db.models import F
+        from wallet.models import Wallet, EscrowRecord
+        
         ride: Ride = validated_data["ride"]
         seats = validated_data.get("seats_booked", 1)
+        
         # Lock row to prevent double-booking
         ride = Ride.objects.select_for_update().get(pk=ride.pk)
         if ride.available_seats < seats:
             raise serializers.ValidationError(
                 {"seats_booked": "Not enough seats (concurrent booking conflict)."}
             )
-        ride.available_seats -= seats
+            
+        rider = self.context["request"].user
+        amount = ride.price_per_seat * seats
+        
+        # Access and lock wallet
+        try:
+            wallet = Wallet.objects.select_for_update().get(user=rider)
+        except Wallet.DoesNotExist:
+            raise serializers.ValidationError({"detail": "Wallet not found for this user."})
+            
+        if wallet.balance < amount:
+            raise serializers.ValidationError({"detail": "Insufficient wallet balance."})
+            
+        # Deduct from wallet
+        wallet.balance = F('balance') - amount
+        wallet.save(update_fields=['balance'])
+        
+        # Decrease available seats
+        ride.available_seats = F('available_seats') - seats
         ride.save(update_fields=["available_seats"])
-        validated_data["rider"] = self.context["request"].user
-        return super().create(validated_data)
-
+        
+        validated_data["rider"] = rider
+        booking = super().create(validated_data)
+        
+        # Hold in escrow
+        EscrowRecord.objects.create(
+            booking=booking,
+            amount=amount,
+            status=EscrowRecord.Status.HELD
+        )
+        
+        return booking
 
 class BookingStatusSerializer(serializers.ModelSerializer):
     class Meta:

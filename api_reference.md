@@ -10,6 +10,7 @@ All REST endpoints are prefixed with `/api/`.
 | `POST` | `/auth/logout/` | Blacklist refresh token to logout. |
 | `GET \| PATCH` | `/auth/profile/` | Get/Update current user's details. |
 | `POST` | `/auth/token/refresh/` | Get new access token using refresh token. |
+| `POST` | `/auth/reviews/` | Rate a driver after a completed ride (1-5 stars). |
 
 ### Register Payload (`POST /auth/register/`)
 ```json
@@ -40,14 +41,25 @@ All REST endpoints are prefixed with `/api/`.
 }
 ```
 
+### Create Review Payload (`POST /api/auth/reviews/`)
+```json
+{
+  "ride": 1,
+  "rating": 5,
+  "comment": "Great driver, very punctual! Highly recommended."
+}
+```
+
 ---
 
 ## 🚗 Rides
 | Method | Endpoint | Query Params | Description |
 |---|---|---|---|
-| `GET` | `/rides/` | `origin`, `destination`, `date`, `seats` | Search/List pending rides. |
-| `POST` | `/rides/` | - | Driver publishes a ride. |
+| `GET` | `/rides/` | `origin`, `destination`, `date`, `seats` | Search pending rides (excludes expired). |
+| `POST` | `/rides/` | - | Driver publishes a ride (Requires `is_driver_verified`=True). |
 | `GET` | `/rides/<id>/` | - | Get specific ride details. |
+| `POST` | `/rides/<id>/start/` | - | Driver changes status to ACTIVE. |
+| `POST` | `/rides/<id>/complete/` | - | Driver changes status to COMPLETED (releases escrow). |
 
 ### Create Ride Payload (`POST /api/rides/`)
 ```json
@@ -69,8 +81,8 @@ All REST endpoints are prefixed with `/api/`.
 | Method | Endpoint | Description |
 |---|---|---|
 | `GET` | `/bookings/` | List current user's bookings (Rider/Driver view). |
-| `POST` | `/bookings/create/` | Rider requests seats on a ride. |
-| `PATCH` | `/bookings/<id>/status/` | Update booking status. |
+| `POST` | `/bookings/create/` | Rider books seats (deducts wallet into escrow). |
+| `PATCH` | `/bookings/<id>/status/` | Update booking. Riders can cancel. Drivers can accept/reject. |
 
 ### Create Booking Payload (`POST /api/bookings/create/`)
 ```json
@@ -83,10 +95,17 @@ All REST endpoints are prefixed with `/api/`.
 ### Update Status Payload (`PATCH /api/bookings/<id>/status/`)
 ```json
 {
-  "status": "ACCEPTED"
+  "status": "CANCELLED"
 }
 ```
 *Valid statuses: `ACCEPTED`, `REJECTED`, `CANCELLED`, `COMPLETED`*
+*Note on Cancellations: If a rider cancels an `ACCEPTED` booking < 2 hours before departure time, 50% of the escrow is partially refunded to the rider, and 50% is released to the driver as a penalty compensation.*
+
+---
+**Frontend Mapping: New Buttons Needed**
+- **Rider Dashboard:** "Cancel Booking" button on all pending and accepted bookings.
+- **Driver Profile / Publishing:** "Verify Driver Account" workflow. The frontend should hide or disable "Publish Ride" until `user.is_driver_verified == True`.
+- **Admin Panel:** Needs a button to review driver credentials and manually toggle `is_driver_verified` to `True`.
 
 ---
 

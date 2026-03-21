@@ -28,3 +28,11 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ("id", "username", "first_name", "last_name", "email", "phone", "role", "rating", "avatar_url")
         read_only_fields = ("id", "rating")
+
+        
+from .models import Review
+
+class ReviewSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Review
+        fields = ("id", "ride", "rating", "comment", "created_at")
