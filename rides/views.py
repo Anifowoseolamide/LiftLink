@@ -22,6 +22,9 @@ class RideListCreateView(generics.ListCreateAPIView):
         destination = params.get("destination")
         date = params.get("date")          # format: YYYY-MM-DD
         seats = params.get("seats")
+        max_price = params.get("max_price")
+        is_verified_driver = params.get("is_verified_driver")
+        instant_book = params.get("instant_book")
 
         if origin:
             qs = qs.filter(origin_name__icontains=origin)
@@ -34,6 +37,16 @@ class RideListCreateView(generics.ListCreateAPIView):
                 qs = qs.filter(available_seats__gte=int(seats))
             except (ValueError, TypeError):
                 pass
+        if max_price:
+            try:
+                qs = qs.filter(price_per_seat__lte=float(max_price))
+            except (ValueError, TypeError):
+                pass
+        if is_verified_driver and is_verified_driver.lower() in ("true", "1"):
+            qs = qs.filter(driver__is_driver_verified=True)
+        if instant_book and instant_book.lower() in ("true", "1"):
+            qs = qs.filter(instant_book=True)
+            
         return qs
 
     def perform_create(self, serializer):

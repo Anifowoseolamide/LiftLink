@@ -27,6 +27,7 @@ class Ride(models.Model):
     total_seats = models.PositiveIntegerField(default=1)
     available_seats = models.PositiveIntegerField(default=1)
     price_per_seat = models.DecimalField(max_digits=10, decimal_places=2)
+    instant_book = models.BooleanField(default=False)
     vehicle_details = models.JSONField(default=dict, blank=True)     # {"make": ..., "model": ..., "plate": ...}
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=PENDING)
     created_at = models.DateTimeField(auto_now_add=True)

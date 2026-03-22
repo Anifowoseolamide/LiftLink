@@ -13,7 +13,7 @@ class RideSerializer(serializers.ModelSerializer):
             "origin_name", "destination_name",
             "origin_coords", "destination_coords",
             "departure_time", "total_seats", "available_seats",
-            "price_per_seat", "vehicle_details", "status",
+            "price_per_seat", "instant_book", "vehicle_details", "status",
             "created_at",
         )
         read_only_fields = ("id", "driver", "available_seats", "status", "created_at")
