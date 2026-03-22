@@ -1,4 +1,5 @@
 import uuid
+import decimal
 import hashlib
 import hmac
 import json
@@ -159,3 +160,34 @@ class PaystackWebhookView(APIView):
                 pass
 
         return Response({"status": "ok"}, status=status.HTTP_200_OK)
+
+
+class MockDepositView(APIView):
+    """POST /api/wallet/mock-deposit/ – bypass Paystack to add funds directly (TESTING ONLY)."""
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        from .models import Wallet
+        amount = request.data.get("amount")
+        if not amount:
+            return Response({"detail": "Amount is required."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            amount = float(amount)
+        except ValueError:
+            return Response({"detail": "Invalid amount."}, status=status.HTTP_400_BAD_REQUEST)
+
+        wallet, _ = Wallet.objects.get_or_create(user=request.user)
+        wallet.balance += decimal.Decimal(amount)
+        wallet.save()
+
+        Transaction.objects.create(
+            user=request.user,
+            transaction_type=Transaction.DEPOSIT,
+            amount=amount,
+            reference=f"MOCK-{uuid.uuid4().hex[:10].upper()}",
+            status=Transaction.SUCCESS,
+            meta={"note": "Mock deposit for testing"}
+        )
+
+        return Response({"detail": f"₦{amount} added to your wallet.", "balance": str(wallet.balance)})

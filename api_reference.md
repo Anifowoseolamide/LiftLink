@@ -127,6 +127,14 @@ All REST endpoints are prefixed with `/api/`.
 | `GET` | `/wallet/history/` | Transaction ledger. |
 | `POST` | `/wallet/deposit/` | Init Paystack payment. |
 | `POST` | `/wallet/withdraw/` | Submit withdrawal request. |
+| `POST` | `/wallet/mock-deposit/` | **TESTING ONLY**: Instantly add funds to wallet. |
+
+### Mock Deposit Payload (`POST /api/wallet/mock-deposit/`)
+```json
+{
+  "amount": 5000.00
+}
+```
 
 ### Deposit Payload (`POST /api/wallet/deposit/`)
 ```json
