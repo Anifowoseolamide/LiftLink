@@ -6,7 +6,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import User
-from .serializers import RegisterSerializer, UserSerializer
+from .serializers import RegisterSerializer, UserSerializer, MyTokenObtainPairSerializer
 
 
 class RegisterView(generics.CreateAPIView):
@@ -17,7 +17,8 @@ class RegisterView(generics.CreateAPIView):
 
 
 class LoginView(TokenObtainPairView):
-    """POST /api/auth/login  – returns JWT access + refresh tokens."""
+    """POST /api/auth/login  – returns JWT access + refresh tokens and user info."""
+    serializer_class = MyTokenObtainPairSerializer
     permission_classes = [AllowAny]
 
 

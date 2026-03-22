@@ -26,11 +26,23 @@ All REST endpoints are prefixed with `/api/`.
 }
 ```
 
-### Login Payload (`POST /auth/login/`)
+### Login Response (`POST /auth/login/`)
 ```json
 {
-  "username": "johndoe",
-  "password": "securepassword123"
+  "access": "JWT_ACCESS_TOKEN",
+  "refresh": "JWT_REFRESH_TOKEN",
+  "user": {
+    "id": 1,
+    "username": "johndoe",
+    "first_name": "John",
+    "last_name": "Doe",
+    "email": "john@example.com",
+    "phone": "+2348012345678",
+    "role": "DRIVER",
+    "driver_verification_status": "ACTIVE",
+    "rating": "5.00",
+    "avatar_url": ""
+  }
 }
 ```
 
@@ -56,7 +68,7 @@ All REST endpoints are prefixed with `/api/`.
 | Method | Endpoint | Query Params | Description |
 |---|---|---|---|
 | `GET` | `/rides/` | `origin`, `destination`, `date`, `seats` | Search pending rides (excludes expired). |
-| `POST` | `/rides/` | - | Driver publishes a ride (Requires `is_driver_verified`=True). |
+| `POST` | `/rides/` | - | Driver publishes a ride (Requires `driver_verification_status`="ACTIVE"). |
 | `GET` | `/rides/<id>/` | - | Get specific ride details. |
 | `POST` | `/rides/<id>/start/` | - | Driver changes status to ACTIVE. |
 | `POST` | `/rides/<id>/complete/` | - | Driver changes status to COMPLETED (releases escrow). |
@@ -104,8 +116,8 @@ All REST endpoints are prefixed with `/api/`.
 ---
 **Frontend Mapping: New Buttons Needed**
 - **Rider Dashboard:** "Cancel Booking" button on all pending and accepted bookings.
-- **Driver Profile / Publishing:** "Verify Driver Account" workflow. The frontend should hide or disable "Publish Ride" until `user.is_driver_verified == True`.
-- **Admin Panel:** Needs a button to review driver credentials and manually toggle `is_driver_verified` to `True`.
+- **Driver Profile / Publishing:** "Verify Driver Account" workflow. The frontend should hide or disable "Publish Ride" until `user.driver_verification_status == "ACTIVE"`.
+- **Admin Panel:** Needs a button to review driver credentials and manually toggle `driver_verification_status` to `"ACTIVE"`.
 
 ---
 

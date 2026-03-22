@@ -27,7 +27,7 @@ The backend uses a dynamic penalty mechanism to protect driver earnings:
 - The ride's open seats are restored, but **50% of the rider's escrow is penalized and given to the driver's wallet**, while the remaining 50% is returned to the rider.
 
 ### 4. Trust Mechanisms: KYC & Ratings
-- **Driver Verification**: Drivers cannot publish a ride out of thin air. They must be manually approved. Endpoint calls to `POST /api/rides/` strictly check if `user.is_driver_verified == True`.
+- **Verification**: Admin can change `driver_verification_status` to `"ACTIVE"` to allow offering rides.
 - **Driver Ratings**: After a ride concludes (`COMPLETED`), riders use `POST /auth/reviews/` to leave 1-5 star ratings with an optional comment. The backend recalculates the driver's lifetime average rating instantly and stores it on their public profile.
 
 ---
