@@ -8,8 +8,17 @@ class User(AbstractUser):
     DRIVER = "DRIVER"
     ROLE_CHOICES = [(RIDER, "Rider"), (DRIVER, "Driver")]
 
+    VERIFICATION_PENDING = "PENDING"
+    VERIFICATION_ACTIVE = "ACTIVE"
+    VERIFICATION_REJECTED = "REJECTED"
+    VERIFICATION_CHOICES = [
+        (VERIFICATION_PENDING, "Pending"),
+        (VERIFICATION_ACTIVE, "Active"),
+        (VERIFICATION_REJECTED, "Rejected"),
+    ]
+
     role = models.CharField(max_length=10, choices=ROLE_CHOICES, default=RIDER)
-    is_driver_verified = models.BooleanField(default=False)
+    driver_verification_status = models.CharField(max_length=20, choices=VERIFICATION_CHOICES, default=VERIFICATION_PENDING)
     phone = models.CharField(max_length=20, blank=True)
     rating = models.DecimalField(max_digits=3, decimal_places=2, default=5.00)
     avatar_url = models.URLField(blank=True)

@@ -26,8 +26,8 @@ class RegisterSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ("id", "username", "first_name", "last_name", "email", "phone", "role", "rating", "avatar_url")
-        read_only_fields = ("id", "rating")
+        fields = ("id", "username", "first_name", "last_name", "email", "phone", "role", "driver_verification_status", "rating", "avatar_url")
+        read_only_fields = ("id", "driver_verification_status", "rating")
 
         
 from .models import Review

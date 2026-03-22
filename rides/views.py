@@ -43,7 +43,7 @@ class RideListCreateView(generics.ListCreateAPIView):
             except (ValueError, TypeError):
                 pass
         if is_verified_driver and is_verified_driver.lower() in ("true", "1"):
-            qs = qs.filter(driver__is_driver_verified=True)
+            qs = qs.filter(driver__driver_verification_status=User.VERIFICATION_ACTIVE)
         if instant_book and instant_book.lower() in ("true", "1"):
             qs = qs.filter(instant_book=True)
             
@@ -53,7 +53,7 @@ class RideListCreateView(generics.ListCreateAPIView):
         from rest_framework.exceptions import PermissionDenied
         if self.request.user.role != User.DRIVER:
             raise PermissionDenied("Only drivers can publish rides.")
-        if not self.request.user.is_driver_verified:
+        if self.request.user.driver_verification_status != User.VERIFICATION_ACTIVE:
             raise PermissionDenied("Your driver profile must be verified before publishing rides.")
         serializer.save(driver=self.request.user)
 
