@@ -49,6 +49,7 @@ from .models import Review
 from .serializers import ReviewSerializer
 from bookings.models import Booking
 
+
 class ReviewCreateView(generics.CreateAPIView):
     """POST /api/auth/reviews/ – Rider rates a driver after a completed ride."""
     serializer_class = ReviewSerializer
@@ -56,27 +57,37 @@ class ReviewCreateView(generics.CreateAPIView):
 
     def perform_create(self, serializer):
         from rides.models import Ride
-        
+
         ride_id = self.request.data.get("ride")
         try:
             ride = Ride.objects.get(pk=ride_id)
         except Ride.DoesNotExist:
             from rest_framework.exceptions import ValidationError
             raise ValidationError({"ride": "Ride not found."})
-            
+
         if ride.status != Ride.COMPLETED:
             from rest_framework.exceptions import ValidationError
             raise ValidationError({"ride": "Can only rate completed rides."})
-            
+
         has_booking = Booking.objects.filter(ride=ride, rider=self.request.user, status=Booking.ACCEPTED).exists()
         if not has_booking:
             from rest_framework.exceptions import ValidationError
             raise ValidationError({"detail": "You did not participate in this completed ride."})
-            
+
         serializer.save(rider=self.request.user, driver=ride.driver)
-        
+
         from django.db.models import Avg
         avg_rating = Review.objects.filter(driver=ride.driver).aggregate(Avg('rating'))['rating__avg']
         if avg_rating is not None:
             ride.driver.rating = round(avg_rating, 2)
             ride.driver.save(update_fields=['rating'])
+
+
+class ReviewListView(generics.ListAPIView):
+    """GET /api/auth/reviews/<user_id>/ – List reviews received by a specific user (driver)."""
+    serializer_class = ReviewSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user_id = self.kwargs.get("user_id")
+        return Review.objects.filter(driver_id=user_id).select_related("rider").order_by("-id")

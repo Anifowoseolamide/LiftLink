@@ -10,8 +10,17 @@ from rest_framework import generics, status, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import Transaction
+from .models import Transaction, Wallet
 from .serializers import TransactionSerializer, DepositSerializer, WithdrawSerializer
+
+
+class WalletBalanceView(APIView):
+    """GET /api/wallet/balance/ – returns the authenticated user's current wallet balance."""
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        wallet, _ = Wallet.objects.get_or_create(user=request.user)
+        return Response({"balance": str(wallet.balance)}, status=status.HTTP_200_OK)
 
 
 def _paystack_headers():

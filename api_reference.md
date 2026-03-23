@@ -11,6 +11,7 @@ All REST endpoints are prefixed with `/api/`.
 | `GET \| PATCH` | `/auth/profile/` | Get/Update current user's details. |
 | `POST` | `/auth/token/refresh/` | Get new access token using refresh token. |
 | `POST` | `/auth/reviews/` | Rate a driver after a completed ride (1-5 stars). |
+| `GET` | `/auth/reviews/<user_id>/` | View all reviews given to a specific driver. |
 
 ### Register Payload (`POST /auth/register/`)
 ```json
@@ -41,7 +42,9 @@ All REST endpoints are prefixed with `/api/`.
     "role": "DRIVER",
     "driver_verification_status": "ACTIVE",
     "rating": "5.00",
-    "avatar_url": ""
+    "avatar_url": "",
+    "wallet_balance": "0.00",
+    "total_trips": 0
   }
 }
 ```
@@ -67,7 +70,8 @@ All REST endpoints are prefixed with `/api/`.
 ## 🚗 Rides
 | Method | Endpoint | Query Params | Description |
 |---|---|---|---|
-| `GET` | `/rides/` | `origin`, `destination`, `date`, `seats` | Search pending rides (excludes expired). |
+| `GET` | `/rides/` | `origin`, `destination`, `date`, `seats`, `ordering=-departure_time` | Search pending rides (excludes expired). |
+| `GET` | `/rides/mine/` | `status` | List rides created by authenticated driver. |
 | `POST` | `/rides/` | - | Driver publishes a ride (Requires `driver_verification_status`="ACTIVE"). |
 | `GET` | `/rides/<id>/` | - | Get specific ride details. |
 | `POST` | `/rides/<id>/start/` | - | Driver changes status to ACTIVE. |
@@ -124,10 +128,18 @@ All REST endpoints are prefixed with `/api/`.
 ## 💰 Wallet & Paystack
 | Method | Endpoint | Description |
 |---|---|---|
-| `GET` | `/wallet/history/` | Transaction ledger. |
+| `GET` | `/wallet/balance/` | Get user wallet balance. |
+| `GET` | `/wallet/history/` | Transaction ledger. (Includes `description`). |
 | `POST` | `/wallet/deposit/` | Init Paystack payment. |
 | `POST` | `/wallet/withdraw/` | Submit withdrawal request. |
 | `POST` | `/wallet/mock-deposit/` | **TESTING ONLY**: Instantly add funds to wallet. |
+
+### Wallet Balance Response (`GET /api/wallet/balance/`)
+```json
+{
+  "balance": "5000.00"
+}
+```
 
 ### Mock Deposit Payload (`POST /api/wallet/mock-deposit/`)
 ```json
