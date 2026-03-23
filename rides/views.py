@@ -144,3 +144,27 @@ class RideCompleteView(APIView):
                 continue
 
         return Response({"detail": "Ride completed and funds released.", "status": ride.status})
+
+
+class ExpireRidesCronView(APIView):
+    """
+    GET /api/rides/cron/expire-rides/
+    Triggered by an external Cron service (like cron-job.org) to expire rides.
+    Requires ?key=SECRET_KEY to authorize.
+    """
+    authentication_classes = []
+    permission_classes = []
+
+    def get(self, request):
+        from django.core.management import call_command
+        from django.conf import settings
+        
+        secret_key = request.query_params.get('key')
+        if not secret_key or secret_key != settings.SECRET_KEY:
+            return Response({"error": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
+            
+        try:
+            call_command('expire_rides')
+            return Response({"status": "success", "message": "Expired rides process completed."})
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
