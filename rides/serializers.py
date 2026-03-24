@@ -12,7 +12,7 @@ class RideSerializer(serializers.ModelSerializer):
             "id", "driver",
             "origin_name", "destination_name",
             "origin_coords", "destination_coords",
-            "departure_time", "total_seats", "available_seats",
+            "departure_time", "end_time", "total_seats", "available_seats",
             "price_per_seat", "instant_book", "vehicle_details", "status",
             "created_at",
         )

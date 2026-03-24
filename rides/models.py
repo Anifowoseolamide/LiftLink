@@ -24,6 +24,7 @@ class Ride(models.Model):
     origin_coords = models.JSONField(default=dict, blank=True)       # {"lat": ..., "lng": ...}
     destination_coords = models.JSONField(default=dict, blank=True)
     departure_time = models.DateTimeField()
+    end_time = models.DateTimeField(null=True, blank=True)
     total_seats = models.PositiveIntegerField(default=1)
     available_seats = models.PositiveIntegerField(default=1)
     price_per_seat = models.DecimalField(max_digits=10, decimal_places=2)
