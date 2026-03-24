@@ -75,18 +75,19 @@ class RegisterSerializer(serializers.ModelSerializer):
             user = User.objects.create_user(**validated_data)
             
             # Ensure the wallet exists and add welcome bonus
+            from decimal import Decimal
             wallet, created = Wallet.objects.get_or_create(user=user)
             if created:
-                wallet.balance = 5000.00
+                wallet.balance = Decimal("5000.00")
             else:
-                wallet.balance += 5000.00
+                wallet.balance += Decimal("5000.00")
             wallet.save()
             
             # Record the welcome bonus transaction
             Transaction.objects.create(
                 user=user,
                 transaction_type=Transaction.DEPOSIT,
-                amount=5000.00,
+                amount=Decimal("5000.00"),
                 reference=f"WELCOME-{uuid.uuid4().hex[:10].upper()}",
                 status=Transaction.SUCCESS,
                 meta={"note": "Welcome Bonus"}
