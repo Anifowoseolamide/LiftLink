@@ -3,8 +3,16 @@ from .models import Ride
 from accounts.serializers import DriverPublicSerializer
 
 
+class VehicleSerializer(serializers.Serializer):
+    make = serializers.CharField(max_length=50)
+    model = serializers.CharField(max_length=50)
+    plate = serializers.CharField(max_length=20)
+    color = serializers.CharField(max_length=20, required=False)
+
+
 class RideSerializer(serializers.ModelSerializer):
     driver = DriverPublicSerializer(read_only=True)
+    vehicle_details = VehicleSerializer()
 
     class Meta:
         model = Ride
