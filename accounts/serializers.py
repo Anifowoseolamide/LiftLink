@@ -74,8 +74,13 @@ class RegisterSerializer(serializers.ModelSerializer):
         with transaction.atomic():
             user = User.objects.create_user(**validated_data)
             
-            # Create a wallet and add welcome bonus
-            Wallet.objects.create(user=user, balance=5000.00)
+            # Ensure the wallet exists and add welcome bonus
+            wallet, created = Wallet.objects.get_or_create(user=user)
+            if created:
+                wallet.balance = 5000.00
+            else:
+                wallet.balance += 5000.00
+            wallet.save()
             
             # Record the welcome bonus transaction
             Transaction.objects.create(

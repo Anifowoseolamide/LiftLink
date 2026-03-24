@@ -64,10 +64,7 @@ class Command(BaseCommand):
                     total_released += 1
                 else:
                     # Rider gets refunded — driver never accepted the booking
-                    try:
-                        rider_wallet = Wallet.objects.select_for_update().get(user=booking.rider)
-                    except Wallet.DoesNotExist:
-                        rider_wallet = Wallet.objects.create(user=booking.rider)
+                    rider_wallet, _ = Wallet.objects.get_or_create(user=booking.rider)
                     rider_wallet.balance = F("balance") + escrow.amount
                     rider_wallet.save(update_fields=["balance"])
                     escrow.status = EscrowRecord.Status.REFUNDED
