@@ -160,7 +160,7 @@ class ExpireRidesCronView(APIView):
         from django.conf import settings
         
         secret_key = request.query_params.get('key')
-        if not secret_key or secret_key != settings.SECRET_KEY:
+        if not secret_key or secret_key != settings.CRON_SECRET:
             return Response({"error": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
             
         try:

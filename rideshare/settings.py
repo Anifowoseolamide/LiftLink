@@ -17,6 +17,8 @@ SECRET_KEY = os.environ.get(
     "django-insecure-rideshare-lagos-change-me-in-production",
 )
 
+CRON_SECRET = os.environ.get("CRON_SECRET", "supersecretcronkey123")
+
 DEBUG = os.environ.get("DEBUG", "True") == "True"
 
 ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "").split(",")
