@@ -6,7 +6,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import User
-from .serializers import RegisterSerializer, UserSerializer, MyTokenObtainPairSerializer
+from .serializers import RegisterSerializer, UserSerializer, MyTokenObtainPairSerializer, BVNVerificationSerializer
 
 
 class RegisterView(generics.CreateAPIView):
@@ -91,3 +91,34 @@ class ReviewListView(generics.ListAPIView):
     def get_queryset(self):
         user_id = self.kwargs.get("user_id")
         return Review.objects.filter(driver_id=user_id).select_related("rider").order_by("-id")
+
+
+class BVNVerificationView(APIView):
+    """POST /api/auth/verify-bvn/ – Activate driver account using a test BVN."""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = BVNVerificationSerializer(data=request.data)
+        if serializer.is_valid():
+            bvn = serializer.validated_data["bvn"]
+            user = request.user
+
+            if bvn == "22354678934":
+                if user.role == User.DRIVER:
+                    user.driver_verification_status = User.VERIFICATION_ACTIVE
+                    user.save()
+                    return Response(
+                        {"detail": "BVN verified successfully. Your driver account is now active."},
+                        status=status.HTTP_200_OK
+                    )
+                else:
+                    return Response(
+                        {"detail": "BVN verified, but only driver accounts can be activated via this method."},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+            else:
+                return Response(
+                    {"detail": "Invalid BVN. Please check and try again."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

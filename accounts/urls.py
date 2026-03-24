@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import RegisterView, LoginView, LogoutView, ProfileView, ReviewCreateView, ReviewListView
+from .views import RegisterView, LoginView, LogoutView, ProfileView, ReviewCreateView, ReviewListView, BVNVerificationView
 
 urlpatterns = [
     path("register/", RegisterView.as_view(), name="auth-register"),
@@ -8,4 +8,5 @@ urlpatterns = [
     path("profile/", ProfileView.as_view(), name="auth-profile"),
     path("reviews/", ReviewCreateView.as_view(), name="auth-reviews-create"),
     path("reviews/<int:user_id>/", ReviewListView.as_view(), name="auth-reviews-list"),
+    path("verify-bvn/", BVNVerificationView.as_view(), name="auth-verify-bvn"),
 ]

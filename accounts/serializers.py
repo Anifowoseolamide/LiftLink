@@ -99,6 +99,7 @@ class RegisterSerializer(serializers.ModelSerializer):
 from .models import Review
 
 
+
 class ReviewSerializer(serializers.ModelSerializer):
     reviewer_name = serializers.SerializerMethodField()
 
@@ -108,3 +109,7 @@ class ReviewSerializer(serializers.ModelSerializer):
 
     def get_reviewer_name(self, obj):
         return obj.rider.get_full_name() or obj.rider.username
+
+
+class BVNVerificationSerializer(serializers.Serializer):
+    bvn = serializers.CharField(max_length=11, min_length=11)
