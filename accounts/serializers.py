@@ -67,7 +67,26 @@ class RegisterSerializer(serializers.ModelSerializer):
         return attrs
 
     def create(self, validated_data):
-        user = User.objects.create_user(**validated_data)
+        from django.db import transaction
+        from wallet.models import Wallet, Transaction
+        import uuid
+        
+        with transaction.atomic():
+            user = User.objects.create_user(**validated_data)
+            
+            # Create a wallet and add welcome bonus
+            Wallet.objects.create(user=user, balance=5000.00)
+            
+            # Record the welcome bonus transaction
+            Transaction.objects.create(
+                user=user,
+                transaction_type=Transaction.DEPOSIT,
+                amount=5000.00,
+                reference=f"WELCOME-{uuid.uuid4().hex[:10].upper()}",
+                status=Transaction.SUCCESS,
+                meta={"note": "Welcome Bonus"}
+            )
+            
         return user
 
 
